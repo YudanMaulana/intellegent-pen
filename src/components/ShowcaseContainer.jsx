@@ -375,9 +375,33 @@ export default function ShowcaseContainer() {
 
   const activeSceneName = SCENES.find(s => s.id === currentSceneId)?.name || "";
 
+  const handleMobileTap = (e) => {
+    if (aspectRatio === '9-16') {
+      // Avoid intercepting header control buttons, timeline inputs, etc.
+      if (e.target.closest('button') || e.target.closest('input') || e.target.closest('a') || e.target.closest('.lang-switcher')) {
+        return;
+      }
+      setIsPlaying(prev => !prev);
+    }
+  };
+
   return (
     <div className={`showcase-viewport-wrapper ${aspectRatio === '9-16' ? 'mobile-viewport' : ''}`}>
-      <div className={`showcase-main-layout ${isFullscreen ? 'cinema-mode-active' : ''} ${aspectRatio === '9-16' ? 'aspect-9-16' : ''}`}>
+      <div 
+        className={`showcase-main-layout ${isFullscreen ? 'cinema-mode-active' : ''} ${aspectRatio === '9-16' ? 'aspect-9-16' : ''}`}
+        onClick={handleMobileTap}
+      >
+        {/* Mobile Play Overlay (Tap to Play) */}
+        {aspectRatio === '9-16' && !isPlaying && (
+          <div className="mobile-play-overlay" onClick={(e) => { e.stopPropagation(); setIsPlaying(true); }}>
+            <div className="mobile-play-btn-glow">
+              <Play size={28} fill="currentColor" style={{ marginLeft: '4px' }} />
+            </div>
+            <span className="mobile-play-label">
+              {lang === 'en' ? 'TAP TO START SHOWCASE' : 'KETUK UNTUK MEMUTAR'}
+            </span>
+          </div>
+        )}
         {/* 3D WebGL Canvas Layer */}
         <Canvas3D scene={currentSceneId} currentTime={currentTime} isPlaying={isPlaying} isPortrait={aspectRatio === '9-16'} />
 
