@@ -191,68 +191,6 @@ const TRANSLATIONS = {
   }
 };
 
-const FingerPointer = ({ translateY, scale, opacity, rippleScale, rippleOpacity }) => {
-  return (
-    <div 
-      className="finger-anim-wrapper" 
-      style={{
-        transform: `translate3d(0, ${translateY}px, 0) scale(${scale})`,
-        opacity: opacity,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        position: 'relative'
-      }}
-    >
-      {/* Contact Ripple ring */}
-      <div 
-        style={{
-          position: 'absolute',
-          top: '0',
-          left: '50%',
-          transform: `translate(-50%, -50%) scale(${rippleScale})`,
-          opacity: rippleOpacity,
-          width: '36px',
-          height: '36px',
-          borderRadius: '50%',
-          border: '2.5px solid var(--accent-cyan)',
-          boxShadow: '0 0 15px var(--accent-cyan)',
-          pointerEvents: 'none',
-          transition: 'none'
-        }}
-      />
-      
-      {/* Laser scanner target ring */}
-      <div 
-        style={{
-          width: '24px',
-          height: '24px',
-          borderRadius: '50%',
-          background: 'rgba(0, 242, 254, 0.2)',
-          border: '1.5px solid var(--accent-cyan)',
-          boxShadow: '0 0 8px rgba(0, 242, 254, 0.5)',
-          position: 'absolute',
-          top: '-12px',
-          left: 'calc(50% - 12px)'
-        }}
-      />
-
-      {/* Physical Hand Cursor */}
-      <img 
-        src="/hand-pointer.png" 
-        alt="Physical Hand" 
-        style={{
-          width: '74px',
-          height: 'auto',
-          marginTop: '4px',
-          mixBlendMode: 'screen',
-          filter: 'drop-shadow(0 0 10px rgba(0, 242, 254, 0.45))'
-        }}
-      />
-    </div>
-  );
-};
-
 export default function ShowcaseContainer() {
   const [lang, setLang] = useState('en');
   const [currentTime, setCurrentTime] = useState(0);
@@ -456,39 +394,6 @@ export default function ShowcaseContainer() {
     }
   };
 
-  // Calculate finger positioning keyframes for Scene 2 (7s - 15s)
-  const localSec = currentTime - 7;
-  const showFinger = currentSceneId === 2 && localSec >= 0.2 && localSec <= 1.8;
-  
-  let translateY = -150; // start offscreen above
-  let opacity = 0;
-  let scale = 1;
-  let rippleScale = 0;
-  let rippleOpacity = 0;
-
-  if (showFinger) {
-    if (localSec >= 0.2 && localSec < 0.6) {
-      const progress = (localSec - 0.2) / 0.4;
-      translateY = -150 + (progress * 130);
-      opacity = progress;
-    } else if (localSec >= 0.6 && localSec < 0.85) {
-      const progress = (localSec - 0.6) / 0.25;
-      translateY = -20 + (progress * 20);
-      opacity = 1;
-      scale = 1 - (progress * 0.12);
-    } else if (localSec >= 0.85 && localSec < 1.1) {
-      const progress = (localSec - 0.85) / 0.25;
-      translateY = progress * -20;
-      opacity = 1;
-      scale = 0.88 + (progress * 0.12);
-      rippleScale = progress * 3.5;
-      rippleOpacity = 1 - progress;
-    } else if (localSec >= 1.1 && localSec <= 1.8) {
-      const progress = (localSec - 1.1) / 0.7;
-      translateY = -20 - (progress * 130);
-      opacity = 1 - progress;
-    }
-  }
 
   return (
     <div className={`showcase-viewport-wrapper ${aspectRatio === '9-16' ? 'mobile-viewport' : ''}`}>
@@ -590,19 +495,6 @@ export default function ShowcaseContainer() {
         {/* SCENE 2: THE SOLUTION */}
         {currentSceneId === 2 && (
           <div className="overlay-wrapper fade-in-anim">
-            {/* Hand Pressing Button Animation */}
-            {showFinger && (
-              <div className="finger-anim-container">
-                <FingerPointer 
-                  translateY={translateY} 
-                  scale={scale} 
-                  opacity={opacity} 
-                  rippleScale={rippleScale} 
-                  rippleOpacity={rippleOpacity} 
-                />
-              </div>
-            )}
-            
             <div className="scene-content-center-top">
               <span className="pre-title cyan-glow-text">{t.s2Pre}</span>
               <h1 className="cinematic-title-center text-gradient-cyan">

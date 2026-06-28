@@ -179,6 +179,136 @@ export default function Canvas3D({ scene, currentTime, isPlaying, isPortrait }) 
     buttonMesh.position.y = 2.85; // Default y
     penGroup.add(buttonMesh);
 
+    // ── 3D Procedural Hand Model ──
+    const handGroup = new THREE.Group();
+    threeScene.add(handGroup);
+    handGroup.visible = false;
+
+    const skinMat = new THREE.MeshStandardMaterial({
+      color: 0xd4a574,
+      roughness: 0.65,
+      metalness: 0.05,
+    });
+
+    const nailMat = new THREE.MeshStandardMaterial({
+      color: 0xf0d0c0,
+      roughness: 0.3,
+      metalness: 0.1,
+    });
+
+    // Palm
+    const palmGeo = new THREE.BoxGeometry(1.3, 0.4, 1.0);
+    palmGeo.translate(0, 0, 0);
+    const palm = new THREE.Mesh(palmGeo, skinMat);
+    palm.castShadow = true;
+    // Round edges by scaling
+    palm.scale.set(1, 1, 1);
+    handGroup.add(palm);
+
+    // Wrist
+    const wristGeo = new THREE.BoxGeometry(1.1, 0.38, 0.6);
+    const wrist = new THREE.Mesh(wristGeo, skinMat);
+    wrist.position.set(0, 0, -0.8);
+    wrist.castShadow = true;
+    handGroup.add(wrist);
+
+    // Forearm segment
+    const forearmGeo = new THREE.BoxGeometry(1.0, 0.36, 1.2);
+    const forearm = new THREE.Mesh(forearmGeo, skinMat);
+    forearm.position.set(0, 0, -1.7);
+    forearm.castShadow = true;
+    handGroup.add(forearm);
+
+    // Helper: create a finger with segments
+    const handGeos = [palmGeo, wristGeo, forearmGeo];
+    const createFinger = (x, z, lengths, thicknesses) => {
+      const fingerGroup = new THREE.Group();
+      fingerGroup.position.set(x, 0.18, z);
+      let currentZ = 0;
+      lengths.forEach((len, i) => {
+        const thick = thicknesses[i];
+        const segGeo = new THREE.CapsuleGeometry(thick, len, 4, 8);
+        handGeos.push(segGeo);
+        const seg = new THREE.Mesh(segGeo, skinMat);
+        seg.rotation.x = Math.PI / 2;
+        seg.position.z = currentZ + len / 2;
+        seg.castShadow = true;
+        fingerGroup.add(seg);
+
+        // Nail on last segment
+        if (i === lengths.length - 1) {
+          const nailGeo = new THREE.BoxGeometry(thick * 1.4, 0.02, len * 0.45);
+          handGeos.push(nailGeo);
+          const nail = new THREE.Mesh(nailGeo, nailMat);
+          nail.position.set(0, thick * 0.9, currentZ + len * 0.7);
+          fingerGroup.add(nail);
+        }
+
+        // Joint bump between segments
+        if (i < lengths.length - 1) {
+          const jointGeo = new THREE.SphereGeometry(thick * 1.05, 8, 8);
+          handGeos.push(jointGeo);
+          const joint = new THREE.Mesh(jointGeo, skinMat);
+          joint.position.set(0, 0, currentZ + len);
+          fingerGroup.add(joint);
+        }
+
+        currentZ += len;
+      });
+      return fingerGroup;
+    };
+
+    // Index finger (the one pressing) - center, longest reach
+    const indexFinger = createFinger(0.15, 0.45, [0.38, 0.32, 0.26], [0.09, 0.08, 0.07]);
+    handGroup.add(indexFinger);
+
+    // Middle finger
+    const middleFinger = createFinger(-0.15, 0.45, [0.40, 0.34, 0.28], [0.09, 0.085, 0.075]);
+    handGroup.add(middleFinger);
+
+    // Ring finger
+    const ringFinger = createFinger(-0.42, 0.42, [0.36, 0.30, 0.24], [0.085, 0.08, 0.07]);
+    handGroup.add(ringFinger);
+
+    // Pinky finger
+    const pinkyFinger = createFinger(-0.62, 0.36, [0.28, 0.22, 0.18], [0.07, 0.065, 0.06]);
+    handGroup.add(pinkyFinger);
+
+    // Thumb (angled outward)
+    const thumbGroup = new THREE.Group();
+    thumbGroup.position.set(0.62, 0.1, 0.1);
+    thumbGroup.rotation.set(0, -0.6, 0.3);
+
+    const thumbGeos = [];
+    const thumbLengths = [0.32, 0.28];
+    const thumbThicks = [0.11, 0.09];
+    let thumbZ = 0;
+    thumbLengths.forEach((len, i) => {
+      const tGeo = new THREE.CapsuleGeometry(thumbThicks[i], len, 4, 8);
+      thumbGeos.push(tGeo);
+      handGeos.push(tGeo);
+      const tSeg = new THREE.Mesh(tGeo, skinMat);
+      tSeg.rotation.x = Math.PI / 2;
+      tSeg.position.z = thumbZ + len / 2;
+      tSeg.castShadow = true;
+      thumbGroup.add(tSeg);
+
+      if (i === thumbLengths.length - 1) {
+        const tnGeo = new THREE.BoxGeometry(0.12, 0.02, 0.14);
+        thumbGeos.push(tnGeo);
+        handGeos.push(tnGeo);
+        const tn = new THREE.Mesh(tnGeo, nailMat);
+        tn.position.set(0, 0.08, thumbZ + len * 0.65);
+        thumbGroup.add(tn);
+      }
+      thumbZ += len;
+    });
+    handGroup.add(thumbGroup);
+
+    // Hand orientation: fingers pointing down toward pen button
+    handGroup.rotation.set(Math.PI, 0, 0); // flip so palm faces down, fingers toward pen
+    handGroup.scale.setScalar(1.1);
+
     // 4. Soundwave Visualizer Rings (for Scene 3)
     const ringsGroup = new THREE.Group();
     threeScene.add(ringsGroup);
@@ -264,11 +394,12 @@ export default function Canvas3D({ scene, currentTime, isPlaying, isPortrait }) 
           targetPenRot.set(0.4, 0.8 + Math.sin(time * 0.2) * 0.3, 0.2);
           targetLEDIntensity = 0.0;
           
+          handGroup.visible = false;
           ringsGroup.visible = false;
           particlesGroup.visible = false;
           break;
 
-        case 2: // The Solution: Focus, click, light-up
+        case 2: { // The Solution: Focus, click, light-up
           if (state.isPortrait) {
             targetCameraPos.set(0, 0.2, 8.0);
             targetPenPos.set(0, 1.2, 0);
@@ -278,26 +409,66 @@ export default function Canvas3D({ scene, currentTime, isPlaying, isPortrait }) 
           }
           targetPenRot.set(0.1, 0.6, -0.05);
 
-          // Animate button click translation
+          // Animate button click & 3D hand
           if (state.isPlaying) {
-            // Click happens in the first 2 seconds of Scene 2 (7s - 9s in global timeline)
             const localSec = time - 7;
-            if (localSec >= 0.5 && localSec <= 1.2) {
-              // Button goes down
-              const progress = (localSec - 0.5) / 0.7; // 0 to 1
-              const buttonY = 2.85 - Math.sin(progress * Math.PI) * 0.14;
-              buttonMesh.position.y = buttonY;
-              
-              if (localSec >= 0.85) {
+
+            // ── 3D Hand Animation Keyframes ──
+            if (localSec >= 0.2 && localSec <= 2.2) {
+              handGroup.visible = true;
+
+              // Get the button's world position for alignment
+              const btnWorldPos = new THREE.Vector3();
+              buttonMesh.getWorldPosition(btnWorldPos);
+
+              const handRestY = btnWorldPos.y + 3.5; // start above
+              const handPressY = btnWorldPos.y + 0.6; // press position
+              const handX = btnWorldPos.x + 0.1;
+              const handZ = btnWorldPos.z + 0.4;
+
+              if (localSec >= 0.2 && localSec < 0.6) {
+                // Phase 1: Descend toward button
+                const p = (localSec - 0.2) / 0.4;
+                const eased = 1 - Math.pow(1 - p, 3); // ease-out cubic
+                const y = handRestY + (handPressY - handRestY) * eased;
+                handGroup.position.set(handX, y, handZ);
+                // Curl index finger slightly as approaching
+                indexFinger.rotation.x = -p * 0.15;
+              } else if (localSec >= 0.6 && localSec < 0.85) {
+                // Phase 2: Press down (finger makes contact)
+                const p = (localSec - 0.6) / 0.25;
+                const pressDepth = Math.sin(p * Math.PI) * 0.18;
+                handGroup.position.set(handX, handPressY - pressDepth, handZ);
+                // Curl index finger to simulate pressing force
+                indexFinger.rotation.x = -0.15 - (p * 0.3);
+                // Button depression
+                const buttonY = 2.85 - Math.sin(p * Math.PI) * 0.14;
+                buttonMesh.position.y = buttonY;
+              } else if (localSec >= 0.85 && localSec < 1.2) {
+                // Phase 3: Hold & release
+                const p = (localSec - 0.85) / 0.35;
+                handGroup.position.set(handX, handPressY + p * 0.4, handZ);
+                indexFinger.rotation.x = -0.45 + (p * 0.45); // uncurl
+                buttonMesh.position.y = 2.85;
                 targetLEDIntensity = 2.0; // LED fires
+              } else if (localSec >= 1.2 && localSec <= 2.2) {
+                // Phase 4: Lift away
+                const p = (localSec - 1.2) / 1.0;
+                const eased = p * p; // ease-in
+                const y = handPressY + 0.4 + (handRestY - handPressY) * eased;
+                handGroup.position.set(handX, y, handZ);
+                indexFinger.rotation.x = 0;
+                targetLEDIntensity = 1.5;
               }
             } else {
+              handGroup.visible = false;
               buttonMesh.position.y = 2.85;
               if (localSec > 1.2) {
                 targetLEDIntensity = 1.5;
               }
             }
           } else {
+            handGroup.visible = false;
             buttonMesh.position.y = 2.85;
             targetLEDIntensity = 1.5;
           }
@@ -305,6 +476,7 @@ export default function Canvas3D({ scene, currentTime, isPlaying, isPortrait }) 
           ringsGroup.visible = false;
           particlesGroup.visible = false;
           break;
+        }
 
         case 3: // Recording: Laying flat/angled, spinning, soundwaves
           if (state.isPortrait) {
@@ -403,6 +575,7 @@ export default function Canvas3D({ scene, currentTime, isPlaying, isPortrait }) 
           targetPenRot.set(0.2, time * 0.25, -0.05);
           targetLEDIntensity = 1.0 + Math.sin(time * 2) * 0.25;
 
+          handGroup.visible = false;
           ringsGroup.visible = false;
           particlesGroup.visible = false;
           break;
@@ -418,6 +591,7 @@ export default function Canvas3D({ scene, currentTime, isPlaying, isPortrait }) 
           targetPenRot.set(0.35, 0.6 + Math.sin(time * 0.1) * 0.15, -0.25);
           targetLEDIntensity = 2.0;
 
+          handGroup.visible = false;
           ringsGroup.visible = false;
           particlesGroup.visible = false;
           break;
@@ -474,11 +648,17 @@ export default function Canvas3D({ scene, currentTime, isPlaying, isPortrait }) 
       clipArmGeo.dispose();
       clipTopGeo.dispose();
       buttonGeo.dispose();
+      palmGeo.dispose();
+      wristGeo.dispose();
+      forearmGeo.dispose();
+      handGeos.forEach(g => g.dispose());
 
       bodyMat.dispose();
       chromeMat.dispose();
       ledMat.dispose();
       tipMat.dispose();
+      skinMat.dispose();
+      nailMat.dispose();
       pMat.dispose();
       ringLineMat.dispose();
 
