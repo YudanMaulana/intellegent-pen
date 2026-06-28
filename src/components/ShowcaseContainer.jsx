@@ -198,7 +198,13 @@ export default function ShowcaseContainer() {
   const [isMuted, setIsMuted] = useState(false);
   const [currentSceneId, setCurrentSceneId] = useState(1);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [aspectRatio, setAspectRatio] = useState('16-9');
+  const [aspectRatio, setAspectRatio] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const isMobile = window.innerWidth <= 768 || window.innerWidth < window.innerHeight;
+      return isMobile ? '9-16' : '16-9';
+    }
+    return '16-9';
+  });
   
   const requestRef = useRef(null);
   const previousTimeRef = useRef(null);

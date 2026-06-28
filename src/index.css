@@ -1746,4 +1746,27 @@ body {
   box-shadow: none !important;
 }
 
+/* Native Mobile Device View Optimization (Full Screen, No Letterboxing) */
+@media (max-width: 768px) {
+  .showcase-viewport-wrapper.mobile-viewport {
+    padding: 0 !important;
+  }
+
+  .showcase-main-layout.aspect-9-16 {
+    max-height: 100vh !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    aspect-ratio: auto !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+  
+  /* Make canvas take full screen */
+  .aspect-9-16 .canvas-container {
+    width: 100% !important;
+    height: 100% !important;
+  }
+}
+
 
