@@ -1823,4 +1823,25 @@ body {
   100% { transform: scale(1); box-shadow: 0 0 15px rgba(0, 242, 254, 0.3); }
 }
 
+/* Stylized Finger Pointer Animation Container */
+.finger-anim-container {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  pointer-events: none;
+  z-index: 95;
+  height: 120px;
+  width: 100px;
+  top: calc(50% - 215px); /* Aligns on top of the 3D Pen button in desktop 16:9 view */
+}
+
+/* Mobile Portrait Finger Pointer Shift */
+.aspect-9-16 .finger-anim-container {
+  top: calc(50% - 262px); /* Aligns on top of the 3D Pen button in portrait 9:16 view */
+}
+
+.finger-anim-wrapper {
+  will-change: transform, opacity;
+}
+
 
