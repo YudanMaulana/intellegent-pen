@@ -381,7 +381,16 @@ export default function ShowcaseContainer() {
       if (e.target.closest('button') || e.target.closest('input') || e.target.closest('a') || e.target.closest('.lang-switcher')) {
         return;
       }
-      setIsPlaying(prev => !prev);
+      
+      const willPlay = !isPlaying;
+      setIsPlaying(willPlay);
+      
+      // Auto-fullscreen when playing on mobile
+      if (willPlay && !document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch((err) => {
+          console.warn(`Error enabling fullscreen on tap: ${err.message}`);
+        });
+      }
     }
   };
 
@@ -393,7 +402,18 @@ export default function ShowcaseContainer() {
       >
         {/* Mobile Play Overlay (Tap to Play) */}
         {aspectRatio === '9-16' && !isPlaying && (
-          <div className="mobile-play-overlay" onClick={(e) => { e.stopPropagation(); setIsPlaying(true); }}>
+          <div 
+            className="mobile-play-overlay" 
+            onClick={(e) => { 
+              e.stopPropagation(); 
+              setIsPlaying(true); 
+              if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch((err) => {
+                  console.warn(`Error enabling fullscreen: ${err.message}`);
+                });
+              }
+            }}
+          >
             <div className="mobile-play-btn-glow">
               <Play size={28} fill="currentColor" style={{ marginLeft: '4px' }} />
             </div>
