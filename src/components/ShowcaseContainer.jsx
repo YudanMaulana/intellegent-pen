@@ -237,21 +237,18 @@ const FingerPointer = ({ translateY, scale, opacity, rippleScale, rippleOpacity 
         }}
       />
 
-      {/* Vector hand cursor */}
-      <svg 
-        width="44" 
-        height="44" 
-        viewBox="0 0 24 24" 
-        fill="none" 
-        stroke="var(--accent-cyan)" 
-        strokeWidth="1.5"
+      {/* Physical Hand Cursor */}
+      <img 
+        src="/hand-pointer.png" 
+        alt="Physical Hand" 
         style={{
+          width: '74px',
+          height: 'auto',
           marginTop: '4px',
-          filter: 'drop-shadow(0 0 6px rgba(0, 242, 254, 0.4))'
+          mixBlendMode: 'screen',
+          filter: 'drop-shadow(0 0 10px rgba(0, 242, 254, 0.45))'
         }}
-      >
-        <path d="M10 9V4.5C10 3.67 10.67 3 11.5 3C12.33 3 13 3.67 13 4.5V11M9 11.5V9.5C9 8.67 9.67 8 10.5 8C11.33 8 12 8.67 12 9.5M13 11V10C13 9.17 13.67 8.5 14.5 8.5C15.33 8.5 16 9.17 16 10V11M16 11.5V10.5C16 9.67 16.67 9 17.5 9C18.33 9 19 9.67 19 10.5V15C19 18.31 16.31 21 13 21H11C8.24 21 6 18.76 6 16V13.5C6 12.67 6.67 12 7.5 12C8.33 12 9 12.67 9 13.5" strokeLinecap="round" strokeLinejoin="round"/>
-      </svg>
+      />
     </div>
   );
 };
