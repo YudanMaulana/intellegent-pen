@@ -305,9 +305,11 @@ export default function Canvas3D({ scene, currentTime, isPlaying, isPortrait }) 
     });
     handGroup.add(thumbGroup);
 
-    // Hand orientation: fingers pointing down toward pen button
-    handGroup.rotation.set(Math.PI, 0, 0); // flip so palm faces down, fingers toward pen
-    handGroup.scale.setScalar(1.1);
+    // Hand orientation: fingers pointing DOWN toward pen button, visible from camera
+    // Fingers built along +Z, rotate -90° around X so they point down (-Y)
+    // Add slight Z rotation so palm faces camera naturally
+    handGroup.rotation.set(-Math.PI / 2, 0.15, 0.1);
+    handGroup.scale.setScalar(0.9);
 
     // 4. Soundwave Visualizer Rings (for Scene 3)
     const ringsGroup = new THREE.Group();
@@ -414,49 +416,57 @@ export default function Canvas3D({ scene, currentTime, isPlaying, isPortrait }) 
             const localSec = time - 7;
 
             // ── 3D Hand Animation Keyframes ──
-            if (localSec >= 0.2 && localSec <= 2.2) {
+            if (localSec >= 0.2 && localSec <= 2.4) {
               handGroup.visible = true;
 
               // Get the button's world position for alignment
               const btnWorldPos = new THREE.Vector3();
               buttonMesh.getWorldPosition(btnWorldPos);
 
-              const handRestY = btnWorldPos.y + 3.5; // start above
-              const handPressY = btnWorldPos.y + 0.6; // press position
-              const handX = btnWorldPos.x + 0.1;
-              const handZ = btnWorldPos.z + 0.4;
+              // Hand approaches from upper-right, stays in front of pen (positive Z for camera visibility)
+              const handRestX = btnWorldPos.x + 2.5;
+              const handRestY = btnWorldPos.y + 2.8;
+              const handPressX = btnWorldPos.x + 0.35;
+              const handPressY = btnWorldPos.y + 0.9;
+              const handZ = btnWorldPos.z + 1.8; // in front of pen toward camera
 
-              if (localSec >= 0.2 && localSec < 0.6) {
-                // Phase 1: Descend toward button
-                const p = (localSec - 0.2) / 0.4;
+              if (localSec >= 0.2 && localSec < 0.7) {
+                // Phase 1: Sweep in from upper-right
+                const p = (localSec - 0.2) / 0.5;
                 const eased = 1 - Math.pow(1 - p, 3); // ease-out cubic
+                const x = handRestX + (handPressX - handRestX) * eased;
                 const y = handRestY + (handPressY - handRestY) * eased;
-                handGroup.position.set(handX, y, handZ);
-                // Curl index finger slightly as approaching
-                indexFinger.rotation.x = -p * 0.15;
-              } else if (localSec >= 0.6 && localSec < 0.85) {
-                // Phase 2: Press down (finger makes contact)
-                const p = (localSec - 0.6) / 0.25;
-                const pressDepth = Math.sin(p * Math.PI) * 0.18;
-                handGroup.position.set(handX, handPressY - pressDepth, handZ);
+                handGroup.position.set(x, y, handZ);
+                // Gradually angle fingers toward button
+                handGroup.rotation.set(-Math.PI / 2 - (eased * 0.15), 0.15 - (eased * 0.1), 0.1);
+                indexFinger.rotation.x = eased * 0.2;
+              } else if (localSec >= 0.7 && localSec < 0.95) {
+                // Phase 2: Press down (finger makes contact with button)
+                const p = (localSec - 0.7) / 0.25;
+                const pressDepth = Math.sin(p * Math.PI) * 0.25;
+                handGroup.position.set(handPressX, handPressY - pressDepth, handZ);
+                handGroup.rotation.set(-Math.PI / 2 - 0.15, 0.05, 0.1);
                 // Curl index finger to simulate pressing force
-                indexFinger.rotation.x = -0.15 - (p * 0.3);
-                // Button depression
+                indexFinger.rotation.x = 0.2 + (p * 0.35);
+                // Button depression in pen local space
                 const buttonY = 2.85 - Math.sin(p * Math.PI) * 0.14;
                 buttonMesh.position.y = buttonY;
-              } else if (localSec >= 0.85 && localSec < 1.2) {
+              } else if (localSec >= 0.95 && localSec < 1.3) {
                 // Phase 3: Hold & release
-                const p = (localSec - 0.85) / 0.35;
-                handGroup.position.set(handX, handPressY + p * 0.4, handZ);
-                indexFinger.rotation.x = -0.45 + (p * 0.45); // uncurl
+                const p = (localSec - 0.95) / 0.35;
+                handGroup.position.set(handPressX, handPressY + p * 0.5, handZ);
+                handGroup.rotation.set(-Math.PI / 2 - 0.15 + (p * 0.15), 0.05 + (p * 0.1), 0.1);
+                indexFinger.rotation.x = 0.55 - (p * 0.55); // uncurl
                 buttonMesh.position.y = 2.85;
                 targetLEDIntensity = 2.0; // LED fires
-              } else if (localSec >= 1.2 && localSec <= 2.2) {
-                // Phase 4: Lift away
-                const p = (localSec - 1.2) / 1.0;
+              } else if (localSec >= 1.3 && localSec <= 2.4) {
+                // Phase 4: Sweep away to upper-right
+                const p = (localSec - 1.3) / 1.1;
                 const eased = p * p; // ease-in
-                const y = handPressY + 0.4 + (handRestY - handPressY) * eased;
-                handGroup.position.set(handX, y, handZ);
+                const x = handPressX + (handRestX - handPressX) * eased;
+                const y = handPressY + 0.5 + (handRestY - handPressY) * eased;
+                handGroup.position.set(x, y, handZ);
+                handGroup.rotation.set(-Math.PI / 2, 0.15, 0.1);
                 indexFinger.rotation.x = 0;
                 targetLEDIntensity = 1.5;
               }
